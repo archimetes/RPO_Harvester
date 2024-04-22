@@ -1,0 +1,53 @@
+{
+  "script": {
+    "lang": "mustache",
+    "source": {
+      "highlight": {
+        "fields": {
+          "fullName": {},
+          "ico": {},
+          "dic": {},
+          "ic_dph": {}
+        }
+      },
+      "query": {
+        "bool": {
+          "should": [
+            {
+              "match": {
+                "fullName": "{{query_string}}"
+              }
+            },
+            {
+              "match": {
+                "ico": "{{query_string}}"
+              }
+            },
+            {
+              "match": {
+                "dic": "{{query_string}}"
+              }
+            },
+            {
+              "match": {
+                "ic_dph": "{{query_string}}"
+              }
+            }
+          ],
+          "minimum_should_match": 1
+        }
+      },
+      "from": "0",
+      "size": "{{size}}",
+      "_source": [
+        "ico",
+        "fullName",
+        "dic",
+        "ic_dph"
+      ]
+    },
+    "params": {
+      "query_string": "ICO or Name or DIC pr IC_DPH"
+    }
+  }
+}

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>RPO formulár</title>
+
+    <style>
+
+        #selection div em {
+            font-weight: bold ;
+        }
+
+    </style>
+
+</head>
+<body>
+
+<h1>RPO formulár</h1>
+<form action="javascript:showData()">
+
+        <div class="autoComplete_wrapper">
+            <input id="autoComplete" type="text" tabindex="1" oninput="autoCmplete(this.value)" autocomplete="false">
+        </div>
+        <div id="selection">
+
+        </div>
+
+</form>
+
+
+<script>
+
+    function showData(){
+        //TODO
+    }
+
+    async function autoCmplete(query) {
+        if (query.length > 1) {
+            let rqdata = {
+                id: "rpo_autocomplete",
+                params: {
+                    query_string: query,
+                    size: 10
+                }
+            };
+            try {
+                // Fetch Data from external Source
+                const source = await fetch('/rpo_actual/_search/template',
+                    {
+                        method: "POST",
+                        mode: "cors", // no-cors, *cors, same-origin
+                        cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+                        credentials: "same-origin", // include, *same-origin, omit
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        redirect: "follow",
+                        referrerPolicy: "no-referrer",
+                        body: JSON.stringify(rqdata),
+                    }
+                );
+                // Data should be an array of `Objects` or `Strings`
+                const data = await source.json();
+                const div = document.getElementById("selection");
+                while(div.firstChild && div.removeChild(div.firstChild));
+                 data.hits.hits.forEach(function (hit) {
+                     let txt ="";
+
+                     if( hit.highlight.ico !=null ){
+                         txt = txt + hit.highlight.ico[0];
+                     }else {
+                         txt = txt + hit._source.ico;
+                     }
+                     txt = txt +" - "
+                     if( hit.highlight.fullName !=null ){
+                         txt = txt + hit.highlight.fullName[0];
+                     }else {
+                         txt = txt + hit._source.fullName;
+                     }
+
+                     div.appendChild(fromHTML("<div>"+txt+"</div>"))
+                 })
+
+            } catch (error) {
+                console.log(error);
+
+            }
+        }
+    }
+    function fromHTML(html, trim = true) {
+        // Process the HTML string.
+        html = trim ? html.trim() : html;
+        if (!html) return null;
+
+        // Then set up a new template element.
+        const template = document.createElement('template');
+        template.innerHTML = html;
+        const result = template.content.children;
+
+        // Then return either an HTMLElement or HTMLCollection,
+        // based on whether the input HTML had one or more roots.
+        if (result.length === 1) return result[0];
+        return result;
+    }
+</script>
+
+</body>
+</html>

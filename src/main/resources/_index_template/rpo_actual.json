@@ -1,0 +1,274 @@
+{
+  "index_patterns": [
+    "rpo_actual-*"
+  ],
+  "template": {
+    "settings": {
+      "index": {
+        "default_pipeline": "rpo_actual",
+        "number_of_replicas": "0",
+        "number_of_shards": "1"
+      },
+      "analysis": {
+        "filter": {
+          "autocomplete": {
+            "type": "edge_ngram",
+            "min_gram": 2,
+            "max_gram": 13
+          }
+        },
+        "analyzer": {
+          "slovak_text": {
+            "type": "custom",
+            "tokenizer": "standard",
+            "char_filter": [
+              "html_strip"
+            ],
+            "filter": [
+              "lowercase",
+              "asciifolding"
+            ]
+          },
+          "slovak_autocomplete": {
+            "type": "custom",
+            "tokenizer": "standard",
+            "char_filter": [
+              "html_strip"
+            ],
+            "filter": [
+              "lowercase",
+              "asciifolding",
+              "autocomplete"
+            ]
+          },
+          "slovak_keyword": {
+            "type": "custom",
+            "tokenizer": "keyword",
+            "char_filter": [
+              "html_strip"
+            ],
+            "filter": [
+              "lowercase",
+              "asciifolding"
+            ]
+          },
+          "slovak_keyword_autocomplete": {
+            "type": "custom",
+            "tokenizer": "keyword",
+            "char_filter": [
+              "html_strip"
+            ],
+            "filter": [
+              "lowercase",
+              "asciifolding",
+              "autocomplete"
+            ]
+          }
+        }
+      }
+    },
+    "mappings": {
+      "properties": {
+        "authorization": {
+          "type": "text"
+        },
+        "address": {
+          "properties": {
+            "buildingIndex": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "buildingNumber": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "country": {
+              "properties": {
+                "code": {
+                  "type": "keyword"
+                },
+                "codelistCode": {
+                  "type": "keyword"
+                },
+                "value": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                }
+              }
+            },
+            "district": {
+              "properties": {
+                "code": {
+                  "type": "keyword"
+                },
+                "codelistCode": {
+                  "type": "keyword"
+                },
+                "value": {
+                  "type": "text",
+                  "analyzer": "slovak_autocomplete",
+                  "search_analyzer": "slovak_text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                }
+              }
+            },
+            "formatedAddress": {
+              "type": "text",
+              "analyzer": "slovak_autocomplete",
+              "search_analyzer": "slovak_text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "municipality": {
+              "properties": {
+                "code": {
+                  "type": "keyword"
+                },
+                "codelistCode": {
+                  "type": "keyword"
+                },
+                "value": {
+                  "type": "text",
+                  "analyzer": "slovak_autocomplete",
+                  "search_analyzer": "slovak_text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                }
+              }
+            },
+            "postalCodes": {
+              "type": "keyword"
+            },
+            "regNumber": {
+              "type": "long"
+            },
+            "street": {
+              "type": "text",
+              "analyzer": "slovak_autocomplete",
+              "search_analyzer": "slovak_text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "validFrom": {
+              "type": "date"
+            }
+          }
+        },
+        "sourceRegister": {
+          "type": "object",
+          "properties": {
+            "registrationNumber": {
+              "type": "keyword"
+            },
+            "registrationOffice": {
+              "type": "text",
+              "analyzer": "slovak_autocomplete",
+              "search_analyzer": "slovak_text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "value": {
+              "type": "text",
+              "analyzer": "slovak_keyword_autocomplete",
+              "search_analyzer": "slovak_keyword",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            }
+          }
+        },
+        "fullName": {
+          "type": "text",
+          "analyzer": "slovak_autocomplete",
+          "search_analyzer": "slovak_text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "establishment": {
+          "type": "date"
+        },
+        "ic_dph": {
+          "type": "text",
+          "analyzer": "slovak_keyword_autocomplete",
+          "search_analyzer": "slovak_keyword",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "legalForm": {
+          "type": "keyword"
+        },
+        "dic": {
+          "type": "text",
+          "analyzer": "slovak_keyword_autocomplete",
+          "search_analyzer": "slovak_keyword",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "ico": {
+          "type": "text",
+          "analyzer": "slovak_keyword_autocomplete",
+          "search_analyzer": "slovak_keyword",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        }
+      }
+    }
+  },
+  "composed_of": [],
+  "allow_auto_create": false
+}

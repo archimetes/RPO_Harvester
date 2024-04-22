@@ -1,0 +1,69 @@
+{
+
+  "processors": [
+    {
+      "date": {
+        "field": "rpo.establishment",
+        "target_field": "establishment",
+        "formats": [
+          "yyyy-MM-dd"
+        ],"ignore_failure": true
+      }
+    },{
+      "set": {
+        "field": "ico",
+        "value": "{{_id}}",
+        "ignore_failure": true
+      }
+    },{
+      "set": {
+        "field": "dic",
+        "value": "{{ds_dsrdp.dic}}",
+        "ignore_failure": true
+      }
+    },{
+      "set": {
+        "field": "ic_dph",
+        "value": "{{ds_dphs.ic_dph}}",
+        "ignore_failure": true
+
+      }
+    },{
+      "set": {
+        "field": "ids",
+        "value": "{{ds_iz_ran.ids}}",
+        "ignore_failure": true
+
+      }
+    }
+  ,
+    {
+      "script": {
+        "source": "\n          \n          Map actualObject(def data) { \n            if( data!=null){\n              for( Map o : data){\n                if( o.validTo == null){\n                  return o;\n                }\n              }\n            }\n            return null;\n          }\n\n          Object actualValue(def data) { \n            Map value = actualObject(data);\n            if( value!=null){\n              return value.value;\n            }\n            return null;\n          }\n\n\n          ctx.put(\"address\", actualObject(ctx.rpo.addresses));\n          ctx.put(\"authorization\",actualValue(ctx.rpo.authorizations));       \n          ctx.put(\"fullName\", actualValue(ctx.rpo.fullNames));     \n          Map legalForm = (Map)actualValue(ctx.rpo.legalForms);\n          if( legalForm!=null){\n          ctx.put(\"legalForm\", legalForm.value);     \n          }\n          \n          Map sourceRegister = new HashMap();\n          sourceRegister.put( \"registrationNumber\", actualValue(ctx.rpo.sourceRegister.registrationNumbers) );\n          \n          sourceRegister.put( \"registrationOffice\", actualValue(ctx.rpo.sourceRegister.registrationOffices) );\n                    \n          sourceRegister.put( \"value\",  ctx.rpo.sourceRegister.value.value);\n                      \n          ctx.put(\"sourceRegister\", sourceRegister);     \n          \n\n          "
+      }
+    },      {
+      "remove": {
+        "field": "rpo",
+        "ignore_missing":true
+      }
+    },      {
+      "remove": {
+        "field": "ds_dphs",
+        "ignore_missing":true
+      }
+    },      {
+      "remove": {
+        "field": "ds_dsrdp",
+        "ignore_missing":true
+      }
+    },      {
+      "remove": {
+        "field": "ds_iz_ran",
+        "ignore_missing":true
+
+      }
+    }
+
+  ]
+
+}

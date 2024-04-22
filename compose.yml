@@ -1,0 +1,96 @@
+version: '2'
+
+name: rpoh
+
+services:
+
+  es01:
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM docker.elastic.co/elasticsearch/elasticsearch:${ES_STACK_VERSION}
+        RUN bash -c '/usr/share/elasticsearch/bin/elasticsearch-plugin install --batch analysis-icu'
+    labels:
+      co.elastic.logs/module: elasticsearch
+    mem_limit: ${ES_MEM_LIMIT}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+     - 9212:9200
+    environment:
+      - node.name=es01
+      - cluster.name=${ES_CLUSTER_NAME}
+      - discovery.type=single-node
+      - ELASTIC_PASSWORD=${ES_PASSWORD}
+      - bootstrap.memory_lock=true
+      - xpack.security.enabled=true
+      - xpack.security.http.ssl.enabled=false
+      - xpack.security.transport.ssl.enabled=false
+      - xpack.license.self_generated.type=${ES_LICENSE}
+    volumes:
+      - rpoharvest_dev-es01_data:/usr/share/elasticsearch/data
+
+  setup:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ES_STACK_VERSION}
+    command: >
+      bash -c '
+        if [ x${ES_PASSWORD} == x ]; then
+          echo "Set the ES_PASSWORD environment variable in the .env file";
+          exit 1;
+        elif [ x${KB_PASSWORD} == x ]; then
+          echo "Set the KB_PASSWORD environment variable in the .env file";
+          exit 1;
+        fi;
+        echo "Waiting for Elasticsearch availability";
+        until curl -s http://es01:9200 | grep -q "missing authentication credentials"; do sleep 30; done;
+        echo "Setting kibana_system password";
+        until curl -s -X POST -u "elastic:${ES_PASSWORD}" -H "Content-Type: application/json" http://es01:9200/_security/user/kibana_system/_password -d "{\"password\":\"${KB_PASSWORD}\"}" | grep -q "^{}"; do sleep 10; done;
+        echo "All done!";
+      '
+    depends_on:
+      es01:
+        condition: service_started
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:${ES_STACK_VERSION}
+    mem_limit: ${KB_MEM_LIMIT}
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+    ports:
+      - 5612:5601
+    environment:
+      - SERVERNAME=kibana
+      - ELASTICSEARCH_HOSTS=http://es01:9200
+      - ELASTICSEARCH_USERNAME=kibana_system
+      - ELASTICSEARCH_PASSWORD=${KB_PASSWORD}
+      - SERVER_SSL_ENABLED=${KB_SSL_ENABLED}
+
+  harvester:
+    image: eclipse-temurin:21
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+    volumes:
+      - ./target:/opt/app
+    command: >
+      bash -c 'java -jar /opt/app/RpoHarvester-1.0-SNAPSHOT.jar -e http://es01:9200 -u elastic -p ${ES_PASSWORD} all'
+
+  nginx:
+     image: nginx
+     ports:
+       - 8080:80
+     volumes:
+       - ./nginx/html:/usr/share/nginx/html:ro
+       - ./nginx/conf.d:/etc/nginx/conf.d
+
+
+
+
+volumes:
+  rpoharvest_dev-es01_data:
+    external: true
+
+# docker volume rm -f rpoharvest_dev-es01_data && docker volume create rpoharvest_dev-es01_data
