@@ -168,7 +168,7 @@ public class RpoHarvester implements Callable<Integer> {
     private void rpoImport() {
         try {
             Request request = new Request("GET", "/_cat/indices/rpo?v&format=json&ignore_unavailable=true");
-            boolean rpoMissing =  new JSONArray( EntityUtils.toString(   client.performRequest(request).getEntity())).isEmpty();
+            boolean rpoMissing = new JSONArray(EntityUtils.toString(client.performRequest(request).getEntity())).isEmpty();
 
             org.apache.hc.client5.http.fluent.Response response = org.apache.hc.client5.http.fluent.Request.get(RPO_BASE_URL).execute();
             XmlMapper xmlMapper = new XmlMapper();
@@ -278,9 +278,6 @@ public class RpoHarvester implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-        credentialsProvider.setCredentials(AuthScope.ANY,
-                new UsernamePasswordCredentials(elasticuser, elasticpassword));
         URL url = new URL(elastic);
         HttpHost httpHost = new HttpHost(url.getHost(), url.getPort(), url.getProtocol());
 
@@ -302,12 +299,21 @@ public class RpoHarvester implements Callable<Integer> {
         } else sslContext = null;
 
         RestClientBuilder builder = RestClient.builder(httpHost);
-        if (elasticuser != null) {
-            builder.setHttpClientConfigCallback(httpClientBuilder -> {
+
+        builder.setHttpClientConfigCallback(httpClientBuilder -> {
+            if (sslContext != null) {
                 httpClientBuilder.setSSLContext(sslContext);
-                return httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
-            });
-        }
+            }
+            if (elasticuser != null) {
+                final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+                credentialsProvider.setCredentials(AuthScope.ANY,
+                        new UsernamePasswordCredentials(elasticuser, elasticpassword));
+
+                httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
+            }
+            return httpClientBuilder;
+        });
+
 
         client = builder.build();
         client.performRequest(new Request("GET", "/"));
@@ -323,6 +329,7 @@ public class RpoHarvester implements Callable<Integer> {
         }
         return 0;
     }
+
 
     private void importAll() {
         rpoImport();
